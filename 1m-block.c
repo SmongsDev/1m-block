@@ -16,10 +16,8 @@
 
 using namespace std;
 
-// 전역 변수로 unordered_set 선언
 unordered_set<string> blocked_hosts;
 
-// IP 헤더 구조체
 struct ip_header {
     u_char ip_vhl;
     u_char ip_tos;
@@ -33,7 +31,6 @@ struct ip_header {
     struct in_addr ip_dst;
 };
 
-// TCP 헤더 구조체
 struct tcp_header {
     u_short th_sport;
     u_short th_dport;
@@ -55,7 +52,6 @@ void dump(unsigned char* buf, int size) {
     printf("\n");
 }
 
-// 호스트 차단 여부 확인 함수
 static int check_http_host(unsigned char* data, int size) {
     string http_data(reinterpret_cast<char*>(data), size);
     size_t host_pos = http_data.find("Host: ");
@@ -153,17 +149,15 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    // 사이트 리스트 로딩
     auto start = chrono::high_resolution_clock::now();
 
 	ifstream file(argv[1]);
 	string host;
 	while (getline(file, host)) {
-		// 줄 끝의 공백 문자 제거
 		host.erase(0, host.find_first_not_of(" \t\r\n"));
 		host.erase(host.find_last_not_of(" \t\r\n") + 1);
 		
-		if (!host.empty()) {  // 빈 줄 무시
+		if (!host.empty()) {
 			blocked_hosts.insert(host);
 		}
 	}
