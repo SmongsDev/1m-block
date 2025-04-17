@@ -55,20 +55,20 @@ void dump(unsigned char* buf, int size) {
 static int check_http_host(unsigned char* data, int size) {
     string http_data(reinterpret_cast<char*>(data), size);
     size_t host_pos = http_data.find("Host: ");
-    
+
     if (host_pos != string::npos) {
         size_t host_end = http_data.find("\r\n", host_pos);
         if (host_end != string::npos) {
             string host = http_data.substr(host_pos + 6, host_end - (host_pos + 6));
-            
+
             cout << "Found Host: " << host << endl;
 
-            auto start = chrono::high_resolution_clock::now();
+            auto start = chrono::steady_clock::now();
             bool is_blocked = (blocked_hosts.find(host) != blocked_hosts.end());
-            auto end = chrono::high_resolution_clock::now();
-            
-            chrono::duration<double> search_time = end - start;
-            cout << "Search time: " << search_time.count() << " seconds" << endl;
+            auto end = chrono::steady_clock::now();
+
+            double search_time = chrono::duration<double, milli>(end - start).count();
+            cout << "Search time: " << search_time << " milliseconds" << endl;
 
             if (is_blocked) {
                 cout << "Matched blocked host! Dropping packet." << endl;
@@ -78,7 +78,6 @@ static int check_http_host(unsigned char* data, int size) {
     }
     return 0;
 }
-
 static u_int32_t print_pkt(struct nfq_data *tb) {
     int id = 0;
     struct nfqnl_msg_packet_hdr *ph;
