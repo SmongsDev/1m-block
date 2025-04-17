@@ -53,7 +53,7 @@ void dump(unsigned char* buf, int size) {
 }
 
 static int check_http_host(unsigned char* data, int size) {
-    string http_data(reinterpret_cast<char*>(data), size);
+    string http_data((char*)data, size);
     size_t host_pos = http_data.find("Host: ");
 
     if (host_pos != string::npos) {
@@ -78,6 +78,7 @@ static int check_http_host(unsigned char* data, int size) {
     }
     return 0;
 }
+
 static u_int32_t print_pkt(struct nfq_data *tb) {
     int id = 0;
     struct nfqnl_msg_packet_hdr *ph;
@@ -112,12 +113,10 @@ static u_int32_t print_pkt(struct nfq_data *tb) {
             }
         }
     }
-
     return id;
 }
 
-static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
-             struct nfq_data *nfa, void *data) {
+static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nfq_data *nfa, void *data) {
     u_int32_t id = print_pkt(nfa);
     int blocked = 0;
 
@@ -148,24 +147,23 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    auto start = chrono::high_resolution_clock::now();
+    auto start = chrono::steady_clock::now();
 
-	ifstream file(argv[1]);
-	string host;
-	while (getline(file, host)) {
-		host.erase(0, host.find_first_not_of(" \t\r\n"));
-		host.erase(host.find_last_not_of(" \t\r\n") + 1);
-		
-		if (!host.empty()) {
-			blocked_hosts.insert(host);
-		}
-	}
+    ifstream file(argv[1]);
+    string host;
+    while (getline(file, host)) {
+        host.erase(0, host.find_first_not_of(" \t\r\n"));
+        host.erase(host.find_last_not_of(" \t\r\n") + 1);
 
-auto end = chrono::high_resolution_clock::now();
-    chrono::duration<double> load_time = end - start;
-    
-    cout << "Loaded " << blocked_hosts.size() << " sites in "
-         << load_time.count() << " seconds" << endl;
+        if (!host.empty()) {
+            blocked_hosts.insert(host);
+        }
+    }
+
+    auto end = chrono::steady_clock::now();
+    double load_time = chrono::duration<double, milli>(end - start).count();
+
+    cout << "Loaded " << blocked_hosts.size() << " sites in " << load_time << " milliseconds" << endl;
 
     struct nfq_handle *h;
     struct nfq_q_handle *qh;
